@@ -1,7 +1,7 @@
 name: flutter_devlog
 description: A production-grade, zero-dependency custom logger for Dart and Flutter.
 version: 1.0.0
-repository: https://github.com/yibeltal-gashaw/packages/flutter-devlog.git
+repository: https://github.com/yibeltal-gashaw/packages.git
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
