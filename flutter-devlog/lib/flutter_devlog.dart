@@ -113,13 +113,12 @@ class DevLogger {
       stackTrace: stackTrace,
     );
 
-    // 1. Output to local developer console (integrated with IDE & DevTools)
-    final ansiColor = enableColors ? level.ansiColor : '';
-    final ansiReset = enableColors ? '\x1B[0m' : '';
-    final consoleMessage = '$ansiColor[${level.label}] $name: $message$ansiReset';
+    // Compose a plain (non-colored) message for developer tools / IDEs.
+    final plainMessage = '[${level.label}] $name: $message';
 
+    // 1. Send plain text to developer.log so DevTools / IDEs don't receive raw ANSI codes.
     developer.log(
-      consoleMessage,
+      plainMessage,
       time: record.time,
       level: level.value,
       name: name,
@@ -127,15 +126,29 @@ class DevLogger {
       stackTrace: stackTrace,
     );
 
-    // 2. Output to standard console (stdout) to ensure it appears in terminal environments
+    // 2. Colorize only the terminal output (stdout).
+    final ansiColor = enableColors ? level.ansiColor : '';
+    final ansiReset = enableColors ? '\x1B[0m' : '';
+    final consoleMessage = '$ansiColor$plainMessage$ansiReset';
+
+    // Print the main colored message to stdout.
     print(consoleMessage);
+
+    // If there's an error or stack trace, print them to stdout wrapped with reset codes
+    // so they don't leave the terminal in a colored state for following output.
+    if (error != null) {
+      print('${ansiColor}Error: $error$ansiReset');
+    }
+    if (stackTrace != null) {
+      print('${ansiColor}$stackTrace$ansiReset');
+    }
 
     // 3. Output to custom transports/listeners (production crashlytics, etc.)
     for (final listener in listeners) {
       try {
         listener(record);
       } catch (e, st) {
-        // Safe guard against faulty listeners causing logs to crash application code
+        // Safeguard against faulty listeners causing logs to crash application code
         developer.log(
           'Error in DevLogger listener callback: $e',
           level: LogLevel.error.value,
